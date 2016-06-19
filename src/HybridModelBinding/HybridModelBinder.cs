@@ -20,12 +20,12 @@ namespace HybridModelBinding
         private readonly IList<KeyValuePair<Type, IValueProvider>> mappedValueProviders = new List<KeyValuePair<Type, IValueProvider>>();
         private readonly IList<IModelBinder> modelBinders = new List<IModelBinder>();
 
-        public HybridModelBinder AddMappedValueProviderFactory(IValueProviderFactory factory)
+        public HybridModelBinder AddValueProviderFactory(IValueProviderFactory factory)
         {
             if (!isGreedy)
             {
                 throw new MethodAccessException(
-                    "This method cannot be called when the binder is not greedy. Use the generic `TAttribute`-version.");
+                    $"This method cannot be called when the binder is not greedy. Use `{nameof(AddMappedValueProviderFactory)}`.");
             }
             else
             {

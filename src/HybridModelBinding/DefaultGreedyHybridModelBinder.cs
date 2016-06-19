@@ -10,9 +10,9 @@ namespace HybridModelBinding
             :base(true)
         {
             AddModelBinder(new BodyModelBinder(readerFactory))
-                .AddMappedValueProviderFactory(new FormValueProviderFactory())
-                .AddMappedValueProviderFactory(new RouteValueProviderFactory())
-                .AddMappedValueProviderFactory(new QueryStringValueProviderFactory());
+                .AddValueProviderFactory(new FormValueProviderFactory())
+                .AddValueProviderFactory(new RouteValueProviderFactory())
+                .AddValueProviderFactory(new QueryStringValueProviderFactory());
         }
     }
 }
