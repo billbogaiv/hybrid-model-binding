@@ -71,7 +71,7 @@ namespace HybridModelBinding
             {
                 await modelBinder.BindModelAsync(bindingContext);
 
-                model = bindingContext.Result.Value.Model;
+                model = bindingContext.Result.Model;
 
                 if (model != null)
                 {
@@ -89,7 +89,7 @@ namespace HybridModelBinding
                 catch (Exception) { }
 
                 // First, let us try and use DI to get the model.
-                model = bindingContext.OperationBindingContext.HttpContext.RequestServices.GetService(bindingContext.ModelType);
+                model = bindingContext.HttpContext.RequestServices.GetService(bindingContext.ModelType);
 
                 if (model == null)
                 {
@@ -103,16 +103,16 @@ namespace HybridModelBinding
                     }
                     catch (Exception)
                     {
-                        bindingContext.Result = ModelBindingResult.Failed(bindingContext.ModelName);
+                        bindingContext.Result = ModelBindingResult.Failed();
 
                         return;
                     }
                 }
 
-                bindingContext.Result = ModelBindingResult.Success(bindingContext.ModelName, model);
+                bindingContext.Result = ModelBindingResult.Success(model);
             }
 
-            var valueProviderFactoryContext = new ValueProviderFactoryContext(bindingContext.OperationBindingContext.ActionContext);
+            var valueProviderFactoryContext = new ValueProviderFactoryContext(bindingContext.ActionContext);
 
             foreach (var kvp in mappedValueProviderFactories)
             {

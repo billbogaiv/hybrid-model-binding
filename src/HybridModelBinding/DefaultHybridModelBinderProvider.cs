@@ -1,13 +1,17 @@
-﻿using Microsoft.AspNetCore.Mvc.Internal;
+﻿using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Mvc.Internal;
+using System.Collections.Generic;
 
 namespace HybridModelBinding
 {
     public class DefaultHybridModelBinderProvider : HybridModelBinderProvider
     {
-        public DefaultHybridModelBinderProvider(IHttpRequestStreamReaderFactory readerFactory)
+        public DefaultHybridModelBinderProvider(
+            IList<IInputFormatter> formatters,
+            IHttpRequestStreamReaderFactory readerFactory)
             :base(
                  new HybridBindingSource(),
-                 new DefaultHybridModelBinder(readerFactory))
+                 new DefaultHybridModelBinder(formatters, readerFactory))
         { }
     }
 }
