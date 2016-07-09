@@ -139,7 +139,7 @@ namespace HybridModelBinding
 
                 if (valueProviderIds == null || valueProviderIds.Count() == 0)
                 {
-                    valueProviderIds = valueProviders.Select(x => x.Key).Prepend(modelBinderId).ToArray();
+                    valueProviderIds = new[] { modelBinderId }.Concat(valueProviders.Select(x => x.Key)).ToArray();
                 }
 
                 var nonMatchingBoundProperties = boundProperties
