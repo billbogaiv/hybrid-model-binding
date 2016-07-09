@@ -6,11 +6,12 @@ using System.Collections.Generic;
 
 namespace HybridModelBinding
 {
-    public class DefaultHybridModelBinder : HybridModelBinder
+    public class DefaultUnsafeHybridModelBinder : HybridModelBinder
     {
-        public DefaultHybridModelBinder(
+        public DefaultUnsafeHybridModelBinder(
             IList<IInputFormatter> formatters,
             IHttpRequestStreamReaderFactory readerFactory)
+            : base(true)
         {
             base
                 .AddModelBinder(ModelBinder.Body, new BodyModelBinder(formatters, readerFactory))

@@ -47,14 +47,15 @@ public void ConfigureServices(IServiceCollection services)
 #### Model
 
 ```csharp
+using HybridModelBinding;
 using Microsoft.AspNetCore.Mvc;
 
 public class Person
 {
-    [FromQuery]
+    [From(ValueProvider.QueryString)]
     public int Age { get; set; }
 
-    [FromRoute]
+    [From(ValueProvider.Route)]
     public string Name { get; set; }
 }
 ```

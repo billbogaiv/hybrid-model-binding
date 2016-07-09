@@ -10,71 +10,62 @@ namespace HybridModelBinding
 {
     public abstract class HybridModelBinder : IModelBinder
     {
-        public HybridModelBinder(bool isGreedy = false)
+        public HybridModelBinder(bool isUnsafe = false)
         {
-            this.isGreedy = isGreedy;
+            this.isUnsafe = isUnsafe;
         }
 
-        private readonly bool isGreedy;
-        private readonly IList<KeyValuePair<Type, IValueProviderFactory>> mappedValueProviderFactories = new List<KeyValuePair<Type, IValueProviderFactory>>();
-        private readonly IList<KeyValuePair<Type, IValueProvider>> mappedValueProviders = new List<KeyValuePair<Type, IValueProvider>>();
-        private readonly IList<IModelBinder> modelBinders = new List<IModelBinder>();
+        private readonly bool isUnsafe;
+        private readonly IList<KeyValuePair<string, IValueProviderFactory>> valueProviderFactories = new List<KeyValuePair<string, IValueProviderFactory>>();
+        private readonly IList<KeyValuePair<string, IModelBinder>> modelBinders = new List<KeyValuePair<string, IModelBinder>>();
 
-        public HybridModelBinder AddValueProviderFactory(IValueProviderFactory factory)
+        public HybridModelBinder AddModelBinder(
+            string id,
+            IModelBinder modelBinder)
         {
-            if (!isGreedy)
-            {
-                throw new MethodAccessException(
-                    $"This method cannot be called when the binder is not greedy. Use `{nameof(AddMappedValueProviderFactory)}`.");
-            }
-            else
-            {
-                mappedValueProviderFactories.Add(
-                    new KeyValuePair<Type, IValueProviderFactory>(null, factory));
-
-                return this;
-            }
-        }
-
-        public HybridModelBinder AddMappedValueProviderFactory<TAttribute>(IValueProviderFactory factory)
-            where TAttribute : Attribute
-        {
-            var existingKeys = mappedValueProviderFactories.Select(x => x.Key);
-
-            if (existingKeys.Contains(typeof(TAttribute)))
-            {
-                throw new ArgumentException(
-                    "Provided attribute already exists in collection.",
-                    nameof(TAttribute));
-            }
-            else
-            {
-                mappedValueProviderFactories.Add(
-                    new KeyValuePair<Type, IValueProviderFactory>(typeof(TAttribute), factory));
-
-                return this;
-            }
-        }
-
-        public HybridModelBinder AddModelBinder(IModelBinder modelBinder)
-        {
-            modelBinders.Add(modelBinder);
+            modelBinders.Add(new KeyValuePair<string, IModelBinder>(id, modelBinder));
 
             return this;
+        }
+
+        public HybridModelBinder AddValueProviderFactory(
+            string id,
+            IValueProviderFactory factory)
+        {
+            var existingKeys = valueProviderFactories.Select(x => x.Key);
+
+            if (existingKeys.Contains(id))
+            {
+                throw new ArgumentException(
+                    $"Provided `id` of `{id}` already exists in collection.",
+                    nameof(id));
+            }
+            else
+            {
+                valueProviderFactories.Add(
+                    new KeyValuePair<string, IValueProviderFactory>(id, factory));
+
+                return this;
+            }
         }
 
         public virtual async Task BindModelAsync(ModelBindingContext bindingContext)
         {
             object model = null;
+            var boundProperties = new List<KeyValuePair<string, string>>();
+            var modelBinderId = string.Empty;
+            var valueProviders = new List<KeyValuePair<string, IValueProvider>>();
 
-            foreach (var modelBinder in modelBinders)
+            foreach (var kvp in modelBinders)
             {
-                await modelBinder.BindModelAsync(bindingContext);
+                await kvp.Value.BindModelAsync(bindingContext);
 
                 model = bindingContext.Result.Model;
 
                 if (model != null)
                 {
+                    modelBinderId = kvp.Key;
+
                     break;
                 }
             }
@@ -112,9 +103,21 @@ namespace HybridModelBinding
                 bindingContext.Result = ModelBindingResult.Success(model);
             }
 
+            var modelProperties = model.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (var property in modelProperties)
+            {
+                var propertyValue = property.GetValue(model, null);
+
+                if (propertyValue?.Equals(GetDefaultPropertyValue(property.PropertyType)) == false)
+                {
+                    boundProperties.Add(new KeyValuePair<string, string>(modelBinderId, property.Name));
+                }
+            }
+
             var valueProviderFactoryContext = new ValueProviderFactoryContext(bindingContext.ActionContext);
 
-            foreach (var kvp in mappedValueProviderFactories)
+            foreach (var kvp in valueProviderFactories)
             {
                 await kvp.Value.CreateValueProviderAsync(valueProviderFactoryContext);
 
@@ -122,60 +125,72 @@ namespace HybridModelBinding
 
                 if (valueProvider != null)
                 {
-                    mappedValueProviders.Add(new KeyValuePair<Type, IValueProvider>(kvp.Key, valueProvider));
+                    valueProviders.Add(new KeyValuePair<string, IValueProvider>(kvp.Key, valueProvider));
                 }
             }
 
-            if (isGreedy)
+            foreach (var property in modelProperties)
             {
-                foreach (var property in model.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
+                var fromAttribute = property.GetCustomAttribute<FromAttribute>();
+                var isPropertyUnsafe = fromAttribute?.IsUnsafe == null || fromAttribute?.IsUnsafe == Unsafe.Undefined
+                    ? isUnsafe
+                    : (fromAttribute?.IsUnsafe == Unsafe.Yes ? true : false);
+                var valueProviderIds = fromAttribute?.ValueProviders;
+
+                if (valueProviderIds == null || valueProviderIds.Count() == 0)
                 {
-                    foreach (var valueProvider in valueProviderFactoryContext.ValueProviders)
-                    {
-                        var matchingUriParam = valueProvider.GetValue(property.Name).FirstValue;
-
-                        if (!string.IsNullOrEmpty(matchingUriParam))
-                        {
-                            var descriptor = TypeDescriptor.GetConverter(property.PropertyType);
-
-                            if (descriptor.CanConvertFrom(matchingUriParam.GetType()))
-                            {
-                                property.SetValue(model, descriptor.ConvertFrom(matchingUriParam), null);
-                            }
-                        }
-                    }
+                    valueProviderIds = valueProviders.Select(x => x.Key).Prepend(modelBinderId).ToArray();
                 }
-            }
-            else
-            {
-                var mappedValueProviderTypes = mappedValueProviders.Select(x => x.Key);
 
-                foreach (var property in model.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
+                var nonMatchingBoundProperties = boundProperties
+                    .Where(x => x.Value == property.Name && !valueProviderIds.Contains(x.Key)).ToList();
+
+                foreach (var nonMatchingBoundProperty in nonMatchingBoundProperties)
                 {
-                    foreach (var attribute in property.GetCustomAttributes())
+                    boundProperties.Remove(nonMatchingBoundProperty);
+                }
+
+                var matchingPropertyNameBoundProperties = boundProperties
+                    .Where(x => x.Value == property.Name)
+                    .Select(x => x.Key);
+
+                if (!valueProviderIds.Any(x => matchingPropertyNameBoundProperties.Contains(x)))
+                {
+                    property.SetValue(model, GetDefaultPropertyValue(property.PropertyType), null);
+                }
+
+                if (isPropertyUnsafe || !boundProperties.Select(x => x.Value).Contains(property.Name))
+                {
+                    foreach (var valueProviderId in valueProviderIds)
                     {
-                        if (mappedValueProviderTypes.Contains(attribute.GetType()))
+                        var valueProvider = valueProviders.FirstOrDefault(x => x.Key == valueProviderId).Value;
+
+                        if (valueProvider != null)
                         {
-                            var valueProvider = mappedValueProviders.FirstOrDefault(x => x.Key == attribute.GetType()).Value;
+                            var matchingUriParam = valueProvider.GetValue(property.Name).FirstValue;
 
-                            if (valueProvider != null)
+                            if (!string.IsNullOrEmpty(matchingUriParam))
                             {
-                                var matchingUriParam = valueProvider.GetValue(property.Name).FirstValue;
+                                var descriptor = TypeDescriptor.GetConverter(property.PropertyType);
 
-                                if (!string.IsNullOrEmpty(matchingUriParam))
+                                if (descriptor.CanConvertFrom(matchingUriParam.GetType()))
                                 {
-                                    var descriptor = TypeDescriptor.GetConverter(property.PropertyType);
+                                    property.SetValue(model, descriptor.ConvertFrom(matchingUriParam), null);
 
-                                    if (descriptor.CanConvertFrom(matchingUriParam.GetType()))
-                                    {
-                                        property.SetValue(model, descriptor.ConvertFrom(matchingUriParam), null);
-                                    }
+                                    boundProperties.Add(new KeyValuePair<string, string>(valueProviderId, property.Name));
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+
+        public object GetDefaultPropertyValue(Type propertyType)
+        {
+            return propertyType.GetTypeInfo().IsPrimitive
+                ? Activator.CreateInstance(propertyType)
+                : null;
         }
     }
 }

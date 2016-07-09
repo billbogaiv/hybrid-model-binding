@@ -4,14 +4,14 @@ using System.Collections.Generic;
 
 namespace HybridModelBinding
 {
-    public class DefaultGreedyHybridModelBinderProvider : HybridModelBinderProvider
+    public class DefaultUnsafeHybridModelBinderProvider : HybridModelBinderProvider
     {
-        public DefaultGreedyHybridModelBinderProvider(
+        public DefaultUnsafeHybridModelBinderProvider(
             IList<IInputFormatter> formatters,
             IHttpRequestStreamReaderFactory readerFactory)
-            :base(
+            : base(
                  new HybridBindingSource(),
-                 new DefaultGreedyHybridModelBinder(formatters, readerFactory))
+                 new DefaultUnsafeHybridModelBinder(formatters, readerFactory))
         { }
     }
 }
