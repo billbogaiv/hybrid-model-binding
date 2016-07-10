@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Internal;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using System.Collections.Generic;
+using static HybridModelBinding.Source;
 
 namespace HybridModelBinding
 {
@@ -13,10 +14,10 @@ namespace HybridModelBinding
             IHttpRequestStreamReaderFactory readerFactory)
         {
             base
-                .AddModelBinder(ModelBinder.Body, new BodyModelBinder(formatters, readerFactory))
-                .AddValueProviderFactory(ValueProvider.Form, new FormValueProviderFactory())
-                .AddValueProviderFactory(ValueProvider.Route, new RouteValueProviderFactory())
-                .AddValueProviderFactory(ValueProvider.QueryString, new QueryStringValueProviderFactory());
+                .AddModelBinder(Body, new BodyModelBinder(formatters, readerFactory))
+                .AddValueProviderFactory(Form, new FormValueProviderFactory())
+                .AddValueProviderFactory(Route, new RouteValueProviderFactory())
+                .AddValueProviderFactory(QueryString, new QueryStringValueProviderFactory());
         }
     }
 }
