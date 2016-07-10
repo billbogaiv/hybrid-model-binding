@@ -1,5 +1,5 @@
 {
-    "version": "0.3.1-*",
+    "version": "0.4.0-*",
     "description": "Provides the ability to bind models using both ModelBinder and ValueProvider in ASP.NET Core.",
     "authors": [ "Bill Boga" ],
     "packOptions": {
