@@ -154,7 +154,7 @@ namespace HybridModelBinding
                     .Where(x => x.Value == property.Name)
                     .Select(x => x.Key);
 
-                if (!valueProviderIds.Any(x => matchingPropertyNameBoundProperties.Contains(x)))
+                if (property.CanWrite && !valueProviderIds.Any(x => matchingPropertyNameBoundProperties.Contains(x)))
                 {
                     property.SetValue(model, GetDefaultPropertyValue(property.PropertyType), null);
                 }
