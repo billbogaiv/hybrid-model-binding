@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2035
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D5FF5F05-2BC8-4BD7-A111-A1377BF2D71D}"
 EndProject
@@ -11,7 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "HybridModelBinding", "src\HybridModelBinding\HybridModelBinding.xproj", "{079D9C31-D3FA-4D5B-8EAA-7DE2AB2FD57B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HybridModelBinding", "src\HybridModelBinding\HybridModelBinding.csproj", "{079D9C31-D3FA-4D5B-8EAA-7DE2AB2FD57B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,5 +29,8 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{079D9C31-D3FA-4D5B-8EAA-7DE2AB2FD57B} = {D5FF5F05-2BC8-4BD7-A111-A1377BF2D71D}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {44EB54C6-8889-49BC-ABEB-DAEF39663AF6}
 	EndGlobalSection
 EndGlobal
