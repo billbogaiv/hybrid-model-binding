@@ -8,16 +8,10 @@ The hybrid approach differs from traditional model binding since you get to work
 
 ## Examples
 
-### ASP.NET Core 1.0
+### ASP.NET Core 2.0
 
-#### project.json
-
-```json
-{
-    "dependencies": {
-        "HybridModelBinding": "0.1.0-*"
-    }
-}
+```shell
+dotnet add package HybridModelBinding
 ```
 
 #### Startup.cs
@@ -37,9 +31,10 @@ public void ConfigureServices(IServiceCollection services)
 
     services.Configure<MvcOptions>(x =>
     {
-        var readerFactory = services.BuildServiceProvider().GetRequiredService<IHttpRequestStreamReaderFactory>();
+        var serviceProvider = services.BuildServiceProvider();
+        var readerFactory = serviceProvider.GetRequiredService<IHttpRequestStreamReaderFactory>();
 
-        x.ModelBinderProviders.Insert(0, new DefaultHybridModelBinderProvider(readerFactory));
+        x.ModelBinderProviders.Insert(0, new DefaultHybridModelBinderProvider(x.InputFormatters, readerFactory));
     });
 }
 ```
@@ -48,14 +43,14 @@ public void ConfigureServices(IServiceCollection services)
 
 ```csharp
 using HybridModelBinding;
-using Microsoft.AspNetCore.Mvc;
 
-public class Person
+public class IndexModel
 {
-    [From(ValueProvider.QueryString)]
-    public int Age { get; set; }
+    [From(Source.Body, Source.QueryString, Source.Route)]
+    public int? Age { get; set; }
 
-    [From(ValueProvider.Route)]
+    // Specific re-ordering to show `route` comes first!
+    [From(Source.Body, Source.Form, Source.Route, Source.QueryString)]
     public string Name { get; set; }
 }
 ```
@@ -63,10 +58,56 @@ public class Person
 #### Controller
 
 ```csharp
-[HttpPost]
-[Route("people/{name}")]
-public IActionResult Post(Person model)
+[HttpGet]
+[Route("{age?}/{name?}")]
+public IActionResult Index(IndexModel model)
 { }
 ```
 
-By adding the convention-instance, any controller-action with one-parameter will automatically get associated with the hybrid binder. `DefaultHybridModelBinderProvider` is built-in and is setup to bind data in the following order: body => form-values => route-values => querystring-values. If you do not want to use the convention, you can also decorate your model-parameter with `[FromHybrid]`.
+#### View
+
+```html
+<h3>Age: @(Model.Age.HasValue ? Model.Age.ToString() : "N/A")</h3>
+<h3>Name: @(string.IsNullOrEmpty(Model.Name) ? "N/A" : Model.Name)</h3>
+```
+
+By adding the convention-instance, any controller-action with one-parameter will automatically get associated with the hybrid binder. `DefaultHybridModelBinderProvider` is built-in and is setup to bind data in the following order: body => form-values => route-values => querystring-values. If you do not want to use the convention, you can also decorate your model-parameter with `[From]`.
+
+## Results
+
+Based on the setup above, here is how various URIs will get parsed/rendered:
+
+### /
+
+```html
+<h3>Age: N/A</h3>
+<h3>Name: N/A</h3>
+```
+
+### /10
+
+```html
+<h3>Age: 10</h3>
+<h3>Name: N/A</h3>
+```
+
+### /10/Bill
+
+```html
+<h3>Age: 10</h3>
+<h3>Name: Bill</h3>
+```
+
+### /10/Bill?age=20
+
+```html
+<h3>Age: 20</h3>
+<h3>Name: Bill</h3>
+```
+
+### /10/Bill?age=20&name=Boga
+
+```html
+<h3>Age: 20</h3>
+<h3>Name: Bill</h3> <!--note how the querystring does not get bound since the route comes first in the [From...] ordering-->
+```
