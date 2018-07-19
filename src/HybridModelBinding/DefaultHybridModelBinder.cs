@@ -12,6 +12,7 @@ namespace HybridModelBinding
         public DefaultHybridModelBinder(
             IList<IInputFormatter> formatters,
             IHttpRequestStreamReaderFactory readerFactory)
+            : base(Strategy.FirstInWins)
         {
             base
                 .AddModelBinder(Body, new BodyModelBinder(formatters, readerFactory))

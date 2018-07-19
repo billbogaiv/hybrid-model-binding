@@ -7,12 +7,12 @@ using static HybridModelBinding.Source;
 
 namespace HybridModelBinding
 {
-    public class DefaultUnsafeHybridModelBinder : HybridModelBinder
+    public class DefaultPassthroughHybridModelBinder : HybridModelBinder
     {
-        public DefaultUnsafeHybridModelBinder(
+        public DefaultPassthroughHybridModelBinder(
             IList<IInputFormatter> formatters,
             IHttpRequestStreamReaderFactory readerFactory)
-            : base(true)
+            : base(Strategy.Passthrough)
         {
             base
                 .AddModelBinder(Body, new BodyModelBinder(formatters, readerFactory))
