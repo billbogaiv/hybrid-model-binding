@@ -1,0 +1,7 @@
+﻿@model AspNetCoreWebApplication.Models.IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<h3>Age: @(Model.Age.HasValue ? Model.Age.ToString() : "N/A")</h3>
+<h3>Name: @(string.IsNullOrEmpty(Model.Name) ? "N/A" : Model.Name)</h3>
