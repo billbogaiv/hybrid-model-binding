@@ -9,7 +9,7 @@ namespace HybridModelBinding
         public DefaultHybridModelBinderProvider(
             IList<IInputFormatter> formatters,
             IHttpRequestStreamReaderFactory readerFactory)
-            :base(
+            : base(
                  new HybridBindingSource(),
                  new DefaultHybridModelBinder(formatters, readerFactory))
         { }

@@ -4,14 +4,14 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace HybridModelBinding
 {
-    public class DefaultUnsafeHybridModelBinderProvider : HybridModelBinderProvider
+    public class DefaultPassthroughHybridModelBinderProvider : HybridModelBinderProvider
     {
-        public DefaultUnsafeHybridModelBinderProvider(
+        public DefaultPassthroughHybridModelBinderProvider(
             IList<IInputFormatter> formatters,
             IHttpRequestStreamReaderFactory readerFactory)
             : base(
                  new HybridBindingSource(),
-                 new DefaultUnsafeHybridModelBinder(formatters, readerFactory))
+                 new DefaultPassthroughHybridModelBinder(formatters, readerFactory))
         { }
     }
 }

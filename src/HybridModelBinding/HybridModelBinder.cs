@@ -10,14 +10,18 @@ namespace HybridModelBinding
 {
     public abstract class HybridModelBinder : IModelBinder
     {
-        public HybridModelBinder(bool isUnsafe = false)
+        public HybridModelBinder(BindStrategy bindStrategy)
         {
-            this.isUnsafe = isUnsafe;
+            this.bindStrategy = bindStrategy;
         }
 
-        private readonly bool isUnsafe;
+        private readonly BindStrategy bindStrategy;
         private readonly IList<KeyValuePair<string, IValueProviderFactory>> valueProviderFactories = new List<KeyValuePair<string, IValueProviderFactory>>();
         private readonly IList<KeyValuePair<string, IModelBinder>> modelBinders = new List<KeyValuePair<string, IModelBinder>>();
+
+        public delegate bool BindStrategy(
+            string[] previouslyBoundValueProviderIds,
+            string[] allValueProviderIds);
 
         public HybridModelBinder AddModelBinder(
             string id,
@@ -132,9 +136,9 @@ namespace HybridModelBinding
             foreach (var property in modelProperties)
             {
                 var fromAttribute = property.GetCustomAttribute<FromAttribute>();
-                var isPropertyUnsafe = fromAttribute?.IsUnsafe == null || fromAttribute?.IsUnsafe == Unsafe.Undefined
-                    ? isUnsafe
-                    : (fromAttribute?.IsUnsafe == Unsafe.Yes ? true : false);
+                var activeBindStrategy = fromAttribute?.Strategy == null
+                    ? bindStrategy
+                    : fromAttribute?.Strategy;
                 var valueProviderIds = fromAttribute?.ValueProviders;
 
                 if (valueProviderIds == null || valueProviderIds.Count() == 0)
@@ -159,9 +163,11 @@ namespace HybridModelBinding
                     property.SetValue(model, GetDefaultPropertyValue(property.PropertyType), null);
                 }
 
-                if (isPropertyUnsafe || !boundProperties.Select(x => x.Value).Contains(property.Name))
+                var boundValueProviderIds = new List<string>(boundProperties.Where(x => x.Value == property.Name).Select(x => x.Key));
+
+                foreach (var valueProviderId in valueProviderIds)
                 {
-                    foreach (var valueProviderId in valueProviderIds)
+                    if (activeBindStrategy(boundValueProviderIds.ToArray(), valueProviderIds))
                     {
                         var valueProvider = valueProviders.FirstOrDefault(x => x.Key == valueProviderId).Value;
 
@@ -177,16 +183,21 @@ namespace HybridModelBinding
                                 {
                                     property.SetValue(model, descriptor.ConvertFrom(matchingUriParam), null);
 
+                                    boundValueProviderIds.Add(valueProviderId);
                                     boundProperties.Add(new KeyValuePair<string, string>(valueProviderId, property.Name));
                                 }
                             }
                         }
                     }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
         }
 
-        public object GetDefaultPropertyValue(Type propertyType)
+        private object GetDefaultPropertyValue(Type propertyType)
         {
             return propertyType.GetTypeInfo().IsPrimitive
                 ? Activator.CreateInstance(propertyType)
