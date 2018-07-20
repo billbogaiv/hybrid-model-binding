@@ -8,7 +8,7 @@ The hybrid approach differs from traditional model binding since you get to work
 
 ## Examples
 
-### ASP.NET Core 2.0
+### ASP.NET Core 2.1
 
 ```shell
 dotnet add package HybridModelBinding
