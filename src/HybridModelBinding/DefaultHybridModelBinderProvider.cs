@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.AspNetCore.Mvc.Internal;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using System.Collections.Generic;
 
 namespace HybridModelBinding
