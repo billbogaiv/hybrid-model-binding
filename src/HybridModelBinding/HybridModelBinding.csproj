@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>Provides the ability to bind models using both ModelBinder and ValueProvider in ASP.NET Core.</Description>
-    <VersionPrefix>0.7.0</VersionPrefix>
+    <VersionPrefix>0.8.0</VersionPrefix>
     <Authors>Bill Boga</Authors>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <AssemblyName>HybridModelBinding</AssemblyName>
