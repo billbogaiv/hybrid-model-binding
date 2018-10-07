@@ -55,7 +55,8 @@ namespace HybridModelBinding
 
         public virtual async Task BindModelAsync(ModelBindingContext bindingContext)
         {
-            object model = null;
+            object baseModel = null;
+            object hydratedModel = null;
             var boundProperties = new List<KeyValuePair<string, string>>();
             var modelBinderId = string.Empty;
             var valueProviders = new List<KeyValuePair<string, IValueProvider>>();
@@ -64,9 +65,9 @@ namespace HybridModelBinding
             {
                 await kvp.Value.BindModelAsync(bindingContext);
 
-                model = bindingContext.Result.Model;
+                hydratedModel = bindingContext.Result.Model;
 
-                if (model != null)
+                if (hydratedModel != null)
                 {
                     modelBinderId = kvp.Key;
 
@@ -74,7 +75,7 @@ namespace HybridModelBinding
                 }
             }
 
-            if (model == null)
+            if (hydratedModel == null)
             {
                 try
                 {
@@ -84,9 +85,9 @@ namespace HybridModelBinding
                 catch (Exception) { }
 
                 // First, let us try and use DI to get the model.
-                model = bindingContext.HttpContext.RequestServices.GetService(bindingContext.ModelType);
+                hydratedModel = bindingContext.HttpContext.RequestServices.GetService(bindingContext.ModelType);
 
-                if (model == null)
+                if (hydratedModel == null)
                 {
                     try
                     {
@@ -94,7 +95,7 @@ namespace HybridModelBinding
                          * Using DI did not work, so let us get crude. This might also fail since the model
                          * may not have a parameterless constructor.
                          */
-                        model = Activator.CreateInstance(bindingContext.ModelType);
+                        hydratedModel = Activator.CreateInstance(bindingContext.ModelType);
                     }
                     catch (Exception)
                     {
@@ -104,16 +105,18 @@ namespace HybridModelBinding
                     }
                 }
 
-                bindingContext.Result = ModelBindingResult.Success(model);
+                bindingContext.Result = ModelBindingResult.Success(hydratedModel);
             }
 
-            var modelProperties = model.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            baseModel = hydratedModel;
+
+            var modelProperties = hydratedModel.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
             foreach (var property in modelProperties)
             {
-                var propertyValue = property.GetValue(model, null);
+                var propertyValue = property.GetValue(hydratedModel, null);
 
-                if (propertyValue?.Equals(GetDefaultPropertyValue(property.PropertyType)) == false)
+                if (propertyValue?.Equals(property.GetValue(baseModel, null)) == false)
                 {
                     boundProperties.Add(new KeyValuePair<string, string>(modelBinderId, property.Name));
                 }
@@ -160,7 +163,7 @@ namespace HybridModelBinding
 
                 if (property.CanWrite && !valueProviderIds.Any(x => matchingPropertyNameBoundProperties.Contains(x)))
                 {
-                    property.SetValue(model, GetDefaultPropertyValue(property.PropertyType), null);
+                    property.SetValue(hydratedModel, property.GetValue(baseModel, null), null);
                 }
 
                 var boundValueProviderIds = new List<string>(boundProperties.Where(x => x.Value == property.Name).Select(x => x.Key));
@@ -181,7 +184,7 @@ namespace HybridModelBinding
 
                                 if (descriptor.CanConvertFrom(matchingUriParam.GetType()))
                                 {
-                                    property.SetValue(model, descriptor.ConvertFrom(matchingUriParam), null);
+                                    property.SetValue(hydratedModel, descriptor.ConvertFrom(matchingUriParam), null);
 
                                     boundValueProviderIds.Add(valueProviderId);
                                     boundProperties.Add(new KeyValuePair<string, string>(valueProviderId, property.Name));
@@ -195,13 +198,6 @@ namespace HybridModelBinding
                     }
                 }
             }
-        }
-
-        private object GetDefaultPropertyValue(Type propertyType)
-        {
-            return propertyType.GetTypeInfo().IsPrimitive
-                ? Activator.CreateInstance(propertyType)
-                : null;
         }
     }
 }

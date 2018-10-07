@@ -2,9 +2,9 @@
 {
     public static class Source
     {
-        public const string Body = "body";
-        public const string Form = "form";
-        public const string QueryString = "query";
-        public const string Route = "route";
+        public const string Body = nameof(Body);
+        public const string Form = nameof(Form);
+        public const string QueryString = nameof(QueryString);
+        public const string Route = nameof(Route);
     }
 }
