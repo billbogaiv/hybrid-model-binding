@@ -1,8 +1,5 @@
-using HybridModelBinding;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,18 +17,8 @@ namespace AspNetCoreWebApplication
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc(x =>
-            {
-                x.Conventions.Add(new HybridModelBinderApplicationModelConvention());
-            });
-
-            services.Configure<MvcOptions>(x =>
-            {
-                var serviceProvider = services.BuildServiceProvider();
-                var readerFactory = serviceProvider.GetRequiredService<IHttpRequestStreamReaderFactory>();
-
-                x.ModelBinderProviders.Insert(0, new DefaultHybridModelBinderProvider(x.InputFormatters, readerFactory));
-            });
+            services.AddMvc()
+                .AddHybridModelBinder();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
