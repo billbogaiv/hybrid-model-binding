@@ -16,6 +16,8 @@ dotnet add package HybridModelBinding
 
 #### Startup.cs
 
+```csharp
+
 // Boilerplate...
 
 public void ConfigureServices(IServiceCollection services)
