@@ -17,25 +17,14 @@ dotnet add package HybridModelBinding
 #### Startup.cs
 
 ```csharp
-using HybridModelBinding;
 
 // Boilerplate...
 
 public void ConfigureServices(IServiceCollection services)
 {
     // Add framework services.
-    services.AddMvc(x =>
-    {
-        x.Conventions.Add(new HybridModelBinderApplicationModelConvention());
-    });
-
-    services.Configure<MvcOptions>(x =>
-    {
-        var serviceProvider = services.BuildServiceProvider();
-        var readerFactory = serviceProvider.GetRequiredService<IHttpRequestStreamReaderFactory>();
-
-        x.ModelBinderProviders.Insert(0, new DefaultHybridModelBinderProvider(x.InputFormatters, readerFactory));
-    });
+    services.AddMvc()
+        .AddHybridModelBinder();
 }
 ```
 
