@@ -17,8 +17,11 @@ namespace HybridModelBinding
                     {
                         var parameterModel = action.Parameters.First();
                         var parameterType = parameterModel.ParameterInfo.ParameterType;
+                        var hasBindingAttribute = parameterModel.Attributes
+                            .Where(x => typeof(IBindingSourceMetadata).IsAssignableFrom(x.GetType()))
+                            .Any();
 
-                        if (parameterModel.BindingInfo?.BindingSource == null &&
+                        if (!hasBindingAttribute &&
                             parameterType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Count() > 0 &&
                             parameterType != typeof(string))
                         {
