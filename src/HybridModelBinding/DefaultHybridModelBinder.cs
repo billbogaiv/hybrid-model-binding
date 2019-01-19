@@ -1,9 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using System.Collections.Generic;
 using static HybridModelBinding.Source;
+
+#if NET451
+using Microsoft.AspNetCore.Mvc.Internal;
+#else
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+#endif
 
 namespace HybridModelBinding
 {
