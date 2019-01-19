@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -176,18 +177,50 @@ namespace HybridModelBinding
 
                         if (valueProvider != null)
                         {
-                            var matchingUriParam = valueProvider.GetValue(property.Name).FirstValue;
+                            var matchingUriParams = valueProvider.GetValue(property.Name)
+                                .Where(x => !string.IsNullOrEmpty(x))
+                                .ToList();
 
-                            if (!string.IsNullOrEmpty(matchingUriParam))
+                            if (matchingUriParams.Any())
                             {
-                                var descriptor = TypeDescriptor.GetConverter(property.PropertyType);
-
-                                if (descriptor.CanConvertFrom(matchingUriParam.GetType()))
+                                if (matchingUriParams.Count() == 1)
                                 {
-                                    property.SetValue(hydratedModel, descriptor.ConvertFrom(matchingUriParam), null);
+                                    var matchingUriParam = matchingUriParams.First();
+                                    var descriptor = TypeDescriptor.GetConverter(property.PropertyType);
 
-                                    boundValueProviderIds.Add(valueProviderId);
-                                    boundProperties.Add(new KeyValuePair<string, string>(valueProviderId, property.Name));
+                                    if (descriptor.CanConvertFrom(matchingUriParam.GetType()))
+                                    {
+                                        property.SetValue(hydratedModel, descriptor.ConvertFrom(matchingUriParam), null);
+
+                                        boundValueProviderIds.Add(valueProviderId);
+                                        boundProperties.Add(new KeyValuePair<string, string>(valueProviderId, property.Name));
+                                    }
+                                }
+                                else
+                                {
+                                    var descriptor = property.PropertyType.GenericTypeArguments.Any()
+                                        ? TypeDescriptor.GetConverter(property.PropertyType.GenericTypeArguments.First())
+                                        : TypeDescriptor.GetConverter(property.PropertyType);
+
+                                    var propertyListType = typeof(List<>).MakeGenericType(property.PropertyType.GenericTypeArguments.First());
+                                    var propertyListInstance = (IList)Activator.CreateInstance(propertyListType);
+
+                                    foreach (var matchingUriParam in matchingUriParams)
+                                    {
+                                        if (descriptor.CanConvertFrom(matchingUriParam.GetType()))
+                                        {
+                                            try
+                                            {
+                                                propertyListInstance.Add(descriptor.ConvertFrom(matchingUriParam));
+                                            }
+                                            catch (Exception) { }
+                                        }
+                                    }
+
+                                    if (propertyListInstance.Count == matchingUriParams.Count)
+                                    {
+                                        property.SetValue(hydratedModel, propertyListInstance, null);
+                                    }
                                 }
                             }
                         }
