@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Formatters;
+﻿using HybridModelBinding.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using System.Collections.Generic;
@@ -23,7 +24,8 @@ namespace HybridModelBinding
                 .AddModelBinder(Body, new BodyModelBinder(formatters, readerFactory))
                 .AddValueProviderFactory(Form, new FormValueProviderFactory())
                 .AddValueProviderFactory(Route, new RouteValueProviderFactory())
-                .AddValueProviderFactory(QueryString, new QueryStringValueProviderFactory());
+                .AddValueProviderFactory(QueryString, new QueryStringValueProviderFactory())
+                .AddValueProviderFactory(Header, new HeaderValueProviderFactory());
         }
     }
 }
