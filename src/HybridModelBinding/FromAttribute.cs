@@ -2,9 +2,13 @@
 
 namespace HybridModelBinding
 {
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
+    [Obsolete("Use `" + nameof(HybridBindPropertyAttribute) + "` instead.")]
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
     public class FromAttribute : Attribute
     {
+        /// <summary>
+        /// Overall ordering with other usages of `HybridPropertyAttribute` is given priority.
+        /// </summary>
         public FromAttribute(params string[] valueProviders)
         {
             ValueProviders = valueProviders;
@@ -13,12 +17,7 @@ namespace HybridModelBinding
         protected FromAttribute(HybridModelBinder.BindStrategy strategy, params string[] valueProviders)
             : this(valueProviders)
         {
-            if (strategy == null)
-            {
-                throw new ArgumentNullException(nameof(strategy));
-            }
-
-            Strategy = strategy;
+            Strategy = strategy ?? throw new ArgumentNullException(nameof(strategy));
         }
 
         public HybridModelBinder.BindStrategy Strategy { get; private set; }
