@@ -17,12 +17,12 @@ namespace HybridModelBinding
         }
 
         private readonly BindStrategy bindStrategy;
-        private readonly IList<KeyValuePair<string, IValueProviderFactory>> valueProviderFactories = new List<KeyValuePair<string, IValueProviderFactory>>();
         private readonly IList<KeyValuePair<string, IModelBinder>> modelBinders = new List<KeyValuePair<string, IModelBinder>>();
+        private readonly IList<KeyValuePair<string, IValueProviderFactory>> valueProviderFactories = new List<KeyValuePair<string, IValueProviderFactory>>();
 
         public delegate bool BindStrategy(
-            string[] previouslyBoundValueProviderIds,
-            string[] allValueProviderIds);
+            IEnumerable<string> previouslyBoundValueProviderIds,
+            IEnumerable<string> allValueProviderIds);
 
         public HybridModelBinder AddModelBinder(
             string id,
@@ -140,14 +140,21 @@ namespace HybridModelBinding
             foreach (var property in modelProperties)
             {
                 var fromAttribute = property.GetCustomAttribute<FromAttribute>();
-                var activeBindStrategy = fromAttribute?.Strategy == null
-                    ? bindStrategy
-                    : fromAttribute?.Strategy;
-                var valueProviderIds = fromAttribute?.ValueProviders;
+                var valueProviderIds = fromAttribute?.ValueProviders.ToList() ?? new List<string>();
+                var hybridBindPropertyAttributes = property
+                    .GetCustomAttributes<HybridBindPropertyAttribute>()
+                    .OrderByDescending(x => x.Order.HasValue)
+                    .ThenBy(x => x.Order)
+                    .ToList();
 
-                if (valueProviderIds == null || valueProviderIds.Count() == 0)
+                if (hybridBindPropertyAttributes.Any())
                 {
-                    valueProviderIds = new[] { modelBinderId }.Concat(valueProviders.Select(x => x.Key)).ToArray();
+                    valueProviderIds.AddRange(hybridBindPropertyAttributes.SelectMany(x => x.ValueProviders));
+                }
+
+                if (!valueProviderIds.Any())
+                {
+                    valueProviderIds.AddRange(new[] { modelBinderId }.Concat(valueProviders.Select(x => x.Key)));
                 }
 
                 var nonMatchingBoundProperties = boundProperties
@@ -171,13 +178,20 @@ namespace HybridModelBinding
 
                 foreach (var valueProviderId in valueProviderIds)
                 {
-                    if (activeBindStrategy(boundValueProviderIds.ToArray(), valueProviderIds))
+                    var matchingHybridBindPropertyAttribute = hybridBindPropertyAttributes
+                        .FirstOrDefault(x => x.ValueProviders.Contains(valueProviderId));
+
+                    var activeBindStrategy = matchingHybridBindPropertyAttribute?.Strategy ?? (fromAttribute?.Strategy == null
+                            ? bindStrategy
+                            : fromAttribute.Strategy);
+
+                    if (activeBindStrategy(boundValueProviderIds, valueProviderIds))
                     {
                         var valueProvider = valueProviders.FirstOrDefault(x => x.Key == valueProviderId).Value;
 
                         if (valueProvider != null)
                         {
-                            var matchingUriParams = valueProvider.GetValue(property.Name)
+                            var matchingUriParams = valueProvider.GetValue(matchingHybridBindPropertyAttribute?.Name ?? property.Name)
                                 .Where(x => !string.IsNullOrEmpty(x))
                                 .ToList();
 

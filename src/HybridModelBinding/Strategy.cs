@@ -1,19 +1,20 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace HybridModelBinding
 {
     public static class Strategy
     {
         public static bool FirstInWins(
-            string[] previouslyBoundValueProviderIds,
-            string[] allValueProviderIds)
+            IEnumerable<string> previouslyBoundValueProviderIds,
+            IEnumerable<string> allValueProviderIds)
         {
             return !previouslyBoundValueProviderIds.Any();
         }
 
         public static bool Passthrough(
-            string[] previouslyBoundValueProviderIds,
-            string[] allValueProviderIds)
+            IEnumerable<string> previouslyBoundValueProviderIds,
+            IEnumerable<string> allValueProviderIds)
         {
             return true;
         }
