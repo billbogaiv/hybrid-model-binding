@@ -22,6 +22,8 @@ namespace HybridModelBinding
                             .Any();
 
                         if (!hasBindingAttribute &&
+                            parameterType.IsClass &&
+                            !parameterType.IsAbstract &&
                             parameterType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Count() > 0 &&
                             parameterType != typeof(string))
                         {
