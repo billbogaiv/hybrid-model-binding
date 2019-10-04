@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -193,7 +194,28 @@ namespace HybridModelBinding
                         {
                             var matchingUriParams = valueProvider.GetValue(matchingHybridBindPropertyAttribute?.Name ?? property.Name)
                                 .Where(x => !string.IsNullOrEmpty(x))
+                                .Cast<object>()
                                 .ToList();
+
+                            if (!matchingUriParams.Any() && valueProvider is FormValueProvider formValueProvider)
+                            {
+                                var formCollectionValue = formValueProvider
+                                    .GetType()
+                                    .GetField("_values", BindingFlags.NonPublic | BindingFlags.Instance)
+                                    ?.GetValue(formValueProvider);
+
+                                if (formCollectionValue is FormCollection formCollection)
+                                {
+                                    var files = formCollection
+                                        .Files
+                                        .GetFiles(matchingHybridBindPropertyAttribute?.Name ?? property.Name);
+
+                                    if (files != null)
+                                    {
+                                        matchingUriParams.AddRange(files);
+                                    }
+                                }
+                            }
 
                             if (matchingUriParams.Any())
                             {
@@ -202,7 +224,16 @@ namespace HybridModelBinding
                                     var matchingUriParam = matchingUriParams.First();
                                     var descriptor = TypeDescriptor.GetConverter(property.PropertyType);
 
-                                    if (descriptor.CanConvertFrom(matchingUriParam.GetType()))
+                                    if (
+                                        typeof(IFormFile).IsAssignableFrom(matchingUriParam.GetType()) &&
+                                        typeof(IFormFile).IsAssignableFrom(property.PropertyType))
+                                    {
+                                        property.SetValue(hydratedModel, matchingUriParam, null);
+
+                                        boundValueProviderIds.Add(valueProviderId);
+                                        boundProperties.Add(new KeyValuePair<string, string>(valueProviderId, property.Name));
+                                    }
+                                    else if (descriptor.CanConvertFrom(matchingUriParam.GetType()))
                                     {
                                         property.SetValue(hydratedModel, descriptor.ConvertFrom(matchingUriParam), null);
 
@@ -221,7 +252,15 @@ namespace HybridModelBinding
 
                                     foreach (var matchingUriParam in matchingUriParams)
                                     {
-                                        if (descriptor.CanConvertFrom(matchingUriParam.GetType()))
+                                        if (typeof(IFormFile).IsAssignableFrom(matchingUriParam.GetType()))
+                                        {
+                                            try
+                                            {
+                                                propertyListInstance.Add(matchingUriParam);
+                                            }
+                                            catch (Exception) { }
+                                        }
+                                        else if (descriptor.CanConvertFrom(matchingUriParam.GetType()))
                                         {
                                             try
                                             {
@@ -234,6 +273,9 @@ namespace HybridModelBinding
                                     if (propertyListInstance.Count == matchingUriParams.Count)
                                     {
                                         property.SetValue(hydratedModel, propertyListInstance, null);
+
+                                        boundValueProviderIds.Add(valueProviderId);
+                                        boundProperties.Add(new KeyValuePair<string, string>(valueProviderId, property.Name));
                                     }
                                 }
                             }
