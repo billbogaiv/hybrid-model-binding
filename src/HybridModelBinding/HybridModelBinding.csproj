@@ -11,10 +11,10 @@
         <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
         <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
         <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>0.16.0</Version>
+        <VersionPrefix>$(VersionPrefix)</VersionPrefix>
+        <VersionSuffix>$(VersionSuffix)</VersionSuffix>
     </PropertyGroup>
-    <ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.1.1" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.1.1" />
     </ItemGroup>
