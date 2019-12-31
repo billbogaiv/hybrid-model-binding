@@ -22,7 +22,7 @@ jobs:
         id: version
         run: |
           echo "::set-output name=prefix::$(type version.txt)"
-          echo "::set-output name=suffix::$(if ($env:is_tag -ne 'true') {$(if ($env:is_master_branch -eq 'true') {'alpha'} else {$(if ($env:is_release_branch -eq 'true') {'beta'} else {'build'})})+$env:BUILD_NUMBER} else {})"
+          echo "::set-output name=suffix::$(if ($env:is_tag -ne 'true') {$(if ($env:is_master_branch -eq 'true') {'alpha'} else {$(if ($env:is_release_branch -eq 'true') {'beta'} else {'build'})})+'-'+$env:BUILD_NUMBER} else {})"
       - name: Build project
         run: dotnet build -c Release -f netstandard2.0 -p:VersionPrefix=${{steps.version.outputs.prefix}} -p:VersionSuffix=${{steps.version.outputs.suffix}} -o bin/ src/HybridModelBinding
       - name: Create NuGet-package
