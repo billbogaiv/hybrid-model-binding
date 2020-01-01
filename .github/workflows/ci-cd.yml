@@ -31,7 +31,7 @@ jobs:
 
       - name: Create NuGet-package
         if: steps.needs_packaging.outputs.value == 'true'
-        run: dotnet pack -p:OutputPath=../../bin/ src/HybridModelBinding
+        run: dotnet pack --no-build -p:OutputPath=../../bin/ src/HybridModelBinding
 
       - name: Publish NuGet-package
         if: steps.needs_packaging.outputs.value == 'true'
