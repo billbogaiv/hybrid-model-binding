@@ -1,11 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Formatters;
-using System.Collections.Generic;
-
-#if NET451
-using Microsoft.AspNetCore.Mvc.Internal;
-#else
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-#endif
+using System.Collections.Generic;
 
 namespace HybridModelBinding
 {
@@ -13,10 +8,11 @@ namespace HybridModelBinding
     {
         public DefaultPassthroughHybridModelBinderProvider(
             IList<IInputFormatter> formatters,
-            IHttpRequestStreamReaderFactory readerFactory)
+            IHttpRequestStreamReaderFactory readerFactory,
+            IEnumerable<string> fallbackBindingOrder)
             : base(
                  new HybridBindingSource(),
-                 new DefaultPassthroughHybridModelBinder(formatters, readerFactory))
+                 new DefaultPassthroughHybridModelBinder(formatters, readerFactory, fallbackBindingOrder))
         { }
     }
 }

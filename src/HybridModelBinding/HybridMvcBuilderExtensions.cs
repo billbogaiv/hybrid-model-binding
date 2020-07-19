@@ -1,13 +1,8 @@
-using System;
 using HybridModelBinding;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-
-#if NET451
-using Microsoft.AspNetCore.Mvc.Internal;
-#else
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-#endif
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -64,8 +59,8 @@ namespace Microsoft.Extensions.DependencyInjection
             mvcOptions.Conventions.Add(hybridConvention);
 
             var provider = !options.Passthrough
-                ? (IModelBinderProvider)new DefaultHybridModelBinderProvider(mvcOptions.InputFormatters, readerFactory)
-                : new DefaultPassthroughHybridModelBinderProvider(mvcOptions.InputFormatters, readerFactory);
+                ? (IModelBinderProvider)new DefaultHybridModelBinderProvider(mvcOptions.InputFormatters, readerFactory, options.FallbackBindingOrder)
+                : new DefaultPassthroughHybridModelBinderProvider(mvcOptions.InputFormatters, readerFactory, options.FallbackBindingOrder);
 
             mvcOptions.ModelBinderProviders.Insert(0, provider);
         }

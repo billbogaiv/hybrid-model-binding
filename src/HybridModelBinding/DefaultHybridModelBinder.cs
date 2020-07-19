@@ -1,15 +1,10 @@
 ﻿using HybridModelBinding.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using System.Collections.Generic;
 using static HybridModelBinding.Source;
-
-#if NET451
-using Microsoft.AspNetCore.Mvc.Internal;
-#else
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-#endif
 
 namespace HybridModelBinding
 {
@@ -17,8 +12,9 @@ namespace HybridModelBinding
     {
         public DefaultHybridModelBinder(
             IList<IInputFormatter> formatters,
-            IHttpRequestStreamReaderFactory readerFactory)
-            : base(Strategy.FirstInWins)
+            IHttpRequestStreamReaderFactory readerFactory,
+            IEnumerable<string> fallbackBindingOrder)
+            : base(Strategy.FirstInWins, fallbackBindingOrder)
         {
             base
                 .AddModelBinder(Body, new BodyModelBinder(formatters, readerFactory))
