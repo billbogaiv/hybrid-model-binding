@@ -39,11 +39,7 @@ namespace HybridModelBinding.ModelBinding
                 context.ValueProviders.Add(valueProvider);
             }
 
-#if NET451
-            return Task.FromResult(0);
-#else
             return Task.CompletedTask;
-#endif
         }
     }
 }

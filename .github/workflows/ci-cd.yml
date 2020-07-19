@@ -27,7 +27,7 @@ jobs:
           dotnet-version: '3.1.100'
 
       - name: Build project
-        run: dotnet build -c Release -f netstandard2.0 -o bin/ src/HybridModelBinding
+        run: dotnet build -c Release -f netstandard2.1 -o bin/ src/HybridModelBinding
 
       - name: Create NuGet-package
         if: steps.needs_packaging.outputs.value == 'true'

@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using HybridModelBinding.Extensions;
+using HybridModelBinding.ModelBinding;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Collections;
@@ -12,12 +14,18 @@ namespace HybridModelBinding
 {
     public abstract class HybridModelBinder : IModelBinder
     {
-        public HybridModelBinder(BindStrategy bindStrategy)
+        public HybridModelBinder(
+            BindStrategy bindStrategy,
+            IEnumerable<string> fallbackBindingOrder = null)
         {
             this.bindStrategy = bindStrategy;
+            this.fallbackBindingOrder = fallbackBindingOrder ?? FallbackBindingOrder;
         }
 
+        protected static IEnumerable<string> FallbackBindingOrder = new[] { Source.Body, Source.Form, Source.Route, Source.QueryString, Source.Header };
+
         private readonly BindStrategy bindStrategy;
+        private readonly IEnumerable<string> fallbackBindingOrder;
         private readonly IList<KeyValuePair<string, IModelBinder>> modelBinders = new List<KeyValuePair<string, IModelBinder>>();
         private readonly IList<KeyValuePair<string, IValueProviderFactory>> valueProviderFactories = new List<KeyValuePair<string, IValueProviderFactory>>();
 
@@ -29,9 +37,20 @@ namespace HybridModelBinding
             string id,
             IModelBinder modelBinder)
         {
-            modelBinders.Add(new KeyValuePair<string, IModelBinder>(id, modelBinder));
+            var existingKeys = modelBinders.Select(x => x.Key);
 
-            return this;
+            if (existingKeys.Contains(id))
+            {
+                throw new ArgumentException(
+                    $"Provided `id` of `{id}` already exists in collection.",
+                    nameof(id));
+            }
+            else
+            {
+                modelBinders.Add(new KeyValuePair<string, IModelBinder>(id, modelBinder));
+
+                return this;
+            }
         }
 
         public HybridModelBinder AddValueProviderFactory(
@@ -57,21 +76,21 @@ namespace HybridModelBinding
 
         public virtual async Task BindModelAsync(ModelBindingContext bindingContext)
         {
-            object baseModel = null;
             object hydratedModel = null;
             var boundProperties = new List<KeyValuePair<string, string>>();
-            var modelBinderId = string.Empty;
             var valueProviders = new List<KeyValuePair<string, IValueProvider>>();
+
+            object hydratedBodyModel = null;
 
             foreach (var kvp in modelBinders)
             {
                 await kvp.Value.BindModelAsync(bindingContext);
 
-                hydratedModel = bindingContext.Result.Model;
+                hydratedBodyModel = bindingContext.Result.Model;
 
-                if (hydratedModel != null)
+                if (hydratedBodyModel != null)
                 {
-                    modelBinderId = kvp.Key;
+                    valueProviders.Add(new KeyValuePair<string, IValueProvider>(kvp.Key, new BodyValueProvider(hydratedBodyModel)));
 
                     break;
                 }
@@ -110,20 +129,8 @@ namespace HybridModelBinding
                 bindingContext.Result = ModelBindingResult.Success(hydratedModel);
             }
 
-            baseModel = hydratedModel;
-
-            var modelProperties = hydratedModel.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-
-            foreach (var property in modelProperties)
-            {
-                var propertyValue = property.GetValue(hydratedModel, null);
-
-                if (propertyValue?.Equals(property.GetValue(baseModel, null)) == false)
-                {
-                    boundProperties.Add(new KeyValuePair<string, string>(modelBinderId, property.Name));
-                }
-            }
-
+            var hydratedBoundModel = hydratedModel as IHybridBoundModel;
+            var modelProperties = hydratedModel.GetPropertiesNotPartOfType<IHybridBoundModel>().ToList();
             var valueProviderFactoryContext = new ValueProviderFactoryContext(bindingContext.ActionContext);
 
             foreach (var kvp in valueProviderFactories)
@@ -137,6 +144,8 @@ namespace HybridModelBinding
                     valueProviders.Add(new KeyValuePair<string, IValueProvider>(kvp.Key, valueProvider));
                 }
             }
+
+            var defaultBindingOrder = hydratedModel.GetType().GetCustomAttribute<HybridBindClassAttribute>()?.DefaultBindingOrder ?? fallbackBindingOrder;
 
             foreach (var property in modelProperties)
             {
@@ -155,24 +164,7 @@ namespace HybridModelBinding
 
                 if (!valueProviderIds.Any())
                 {
-                    valueProviderIds.AddRange(new[] { modelBinderId }.Concat(valueProviders.Select(x => x.Key)));
-                }
-
-                var nonMatchingBoundProperties = boundProperties
-                    .Where(x => x.Value == property.Name && !valueProviderIds.Contains(x.Key)).ToList();
-
-                foreach (var nonMatchingBoundProperty in nonMatchingBoundProperties)
-                {
-                    boundProperties.Remove(nonMatchingBoundProperty);
-                }
-
-                var matchingPropertyNameBoundProperties = boundProperties
-                    .Where(x => x.Value == property.Name)
-                    .Select(x => x.Key);
-
-                if (property.CanWrite && !valueProviderIds.Any(x => matchingPropertyNameBoundProperties.Contains(x)))
-                {
-                    property.SetValue(hydratedModel, property.GetValue(baseModel, null), null);
+                    valueProviderIds.AddRange(defaultBindingOrder);
                 }
 
                 var boundValueProviderIds = new List<string>(boundProperties.Where(x => x.Value == property.Name).Select(x => x.Key));
@@ -192,9 +184,12 @@ namespace HybridModelBinding
 
                         if (valueProvider != null)
                         {
-                            var matchingUriParams = valueProvider.GetValue(matchingHybridBindPropertyAttribute?.Name ?? property.Name)
-                                .Where(x => !string.IsNullOrEmpty(x))
-                                .Cast<object>()
+                            var matchingUriParams = (valueProvider is BodyValueProvider bodyValueProvider
+                                ? new[] { bodyValueProvider.GetObject(matchingHybridBindPropertyAttribute?.Name ?? property.Name) }
+                                    .Where(x => x != null)
+                                : valueProvider.GetValue(matchingHybridBindPropertyAttribute?.Name ?? property.Name)
+                                    .Where(x => !string.IsNullOrEmpty(x))
+                                    .Cast<object>())
                                 .ToList();
 
                             if (!matchingUriParams.Any() && valueProvider is FormValueProvider formValueProvider)
@@ -224,7 +219,15 @@ namespace HybridModelBinding
                                     var matchingUriParam = matchingUriParams.First();
                                     var descriptor = TypeDescriptor.GetConverter(property.PropertyType);
 
-                                    if (
+                                    if (valueProvider is BodyValueProvider)
+                                    {
+                                        property.SetValue(hydratedModel, matchingUriParam, null);
+
+                                        boundValueProviderIds.Add(valueProviderId);
+                                        boundProperties.Add(new KeyValuePair<string, string>(valueProviderId, property.Name));
+                                        hydratedBoundModel?.HybridBoundProperties?.Add(property.Name, valueProviderId);
+                                    }
+                                    else if (
                                         typeof(IFormFile).IsAssignableFrom(matchingUriParam.GetType()) &&
                                         typeof(IFormFile).IsAssignableFrom(property.PropertyType))
                                     {
@@ -232,6 +235,7 @@ namespace HybridModelBinding
 
                                         boundValueProviderIds.Add(valueProviderId);
                                         boundProperties.Add(new KeyValuePair<string, string>(valueProviderId, property.Name));
+                                        hydratedBoundModel?.HybridBoundProperties?.Add(property.Name, valueProviderId);
                                     }
                                     else if (descriptor.CanConvertFrom(matchingUriParam.GetType()))
                                     {
@@ -239,6 +243,7 @@ namespace HybridModelBinding
 
                                         boundValueProviderIds.Add(valueProviderId);
                                         boundProperties.Add(new KeyValuePair<string, string>(valueProviderId, property.Name));
+                                        hydratedBoundModel?.HybridBoundProperties?.Add(property.Name, valueProviderId);
                                     }
                                 }
                                 else
@@ -276,6 +281,7 @@ namespace HybridModelBinding
 
                                         boundValueProviderIds.Add(valueProviderId);
                                         boundProperties.Add(new KeyValuePair<string, string>(valueProviderId, property.Name));
+                                        hydratedBoundModel?.HybridBoundProperties?.Add(property.Name, valueProviderId);
                                     }
                                 }
                             }

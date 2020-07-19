@@ -2,11 +2,11 @@
 
 *For those who want the utmost flexibility in model binding.*
 
-The hybrid approach differs from traditional model binding since you get to work with both `IModelBinder` and `IValueProvider`. This means your model can first get bound with data from the body of a request, and then potentially get updated with data from route or querystring-attributes (in that order). This has the most benefit for users who prefer to have one-model for their request representations.
+The hybrid approach differs from traditional model binding since you get to work with both `IModelBinder` and `IValueProvider`. This means your model can first get bound with data from the body of a request, and then get updated with data from route or querystring-attributes (in that order). This has the most benefit for users who prefer to have one-model for their request representations.
 
 ## Examples
 
-### ASP.NET Core 2.2
+### ASP.NET Core 3.1
 
 ```shell
 dotnet add package HybridModelBinding
@@ -23,22 +23,31 @@ public void ConfigureServices(IServiceCollection services)
     // Add framework services.
     services
         .AddMvc()
-        .AddHybridModelBinder();
+
+        /**
+         * This will also register a MVC-convention to auto-apply hybrid-binding behavior when a controller-action has a single parameter.
+         * There are additional rules that get enforced to make sure the class is instantiable before applying this convention.
+         */
+        .AddHybridModelBinder(options =>
+        {
+            /**
+             * This is optional and overrides internal ordering of how binding gets applied to a model that doesn't have explicit binding-rules.
+             * Internal ordering is: body => form-values => route-values => querystring-values => header-values
+             */
+            options.FallbackBindingOrder = new[] { Source.QueryString, Source.Route };
+        });
 }
 ```
 
 #### Model
 
-##### NEW WAY!
-
-(version 0.14.0+) New implementation will allow a bit more flexibility and expandability for future features.
-
 ```csharp
 using HybridModelBinding;
 
+[HybridBindClass(defaultBindingOrder: new[] { Source.Header, Source.Body, Source.Form, Source.QueryString, Source.Route })]
 public class IndexModel
 {
-    [HybridBindProperty(new[] { Source.Header, Source.Body, Source.Form, Source.QueryString, Source.Route })]
+    // Binding will result from ordering specified at the class-level.
     public int? Age { get; set; }
 
     /// <summary>
@@ -55,7 +64,13 @@ public class IndexModel
 }
 ```
 
-`HybridBindProperty` also allows specifying order. This is implicitly set based on the line-number of the attribute. It can also be explicitly set to avoid confusion:
+##### HybridBindClass
+
+This attribute is optional. It allows specifying default-ordering when a property is not decorated with `HybridBindProperty`. This will override `FallbackBindingOrder`.
+
+##### HybridBindProperty
+
+This attribute is optional. It will override `HybridBindClass` and `FallbackBindingOrder`. It also allows specifying order. This is implicitly set based on the line-number of the attribute. It can also be explicitly set to avoid confusion:
 
 ```csharp
 [HybridBindProperty(Source.Header, "X-Name", order: 5)]
@@ -78,22 +93,24 @@ This way is also valid, but may look odd depending whether you read lists top-bo
 public string Name { get; set; }
 ```
 
-##### ⚠️ Obsolete way
+##### IHybridBoundModel
 
-No specific timeline for complete removal, but `[From]` will **not** be getting updates.
-`[From]` and `[HybridBindProperty]` *can* be used together on the same property. Ordering rules will apply `[From]` first.
+Maybe you want to see how a property received its value. If your model implements `IHybridBoundModel`, this will give you what you seek. This is optional and not required for everything else to work.
 
 ```csharp
-using HybridModelBinding;
-
-public class IndexModel
+public class IndexModel : IHybridBoundModel
 {
-    [From(Source.Body, Source.QueryString, Source.Route)]
     public int? Age { get; set; }
 
-    // Specific re-ordering to show `route` comes first!
-    [From(Source.Body, Source.Form, Source.Route, Source.QueryString)]
+    [HybridBindProperty(Source.Header, "X-Name")]
+    [HybridBindProperty(new[] { Source.Body, Source.Form, Source.QueryString, Source.Route })]
     public string Name { get; set; }
+
+    /**
+     * Key is the property-name
+     * Value is the source of the binding
+     */
+    public IDictionary<string, string> HybridBoundProperties { get; } = new Dictionary<string, string>();
 }
 ```
 
@@ -104,6 +121,15 @@ public class IndexModel
 [Route("{age?}/{name?}")]
 public IActionResult Index(IndexModel model)
 { }
+
+/**
+ * This action needs to declare `[FromHybrid]` since the registered convention won't hook it up to the library.
+ * Without the parameter-attribute, default .NET behavior will get applied—even if your model is decorated with hybrid-attributes.
+ */
+[HttpGet]
+[Route("{age?}/{name?}")]
+public IActionResult IndexAlternate(int age, [FromHybrid]IndexModel model)
+{ }
 ```
 
 #### View
@@ -112,8 +138,6 @@ public IActionResult Index(IndexModel model)
 <h3>Age: @(Model.Age.HasValue ? Model.Age.ToString() : "N/A")</h3>
 <h3>Name: @(string.IsNullOrEmpty(Model.Name) ? "N/A" : Model.Name)</h3>
 ```
-
-By adding the convention-instance, any controller-action with one-parameter will automatically get associated with the hybrid binder. `DefaultHybridModelBinderProvider` is built-in and is setup to bind data in the following order: body => form-values => route-values => querystring-values => header-values. If you do not want to use the convention, you can also decorate your model-parameter with `[From]`.
 
 ## Results
 
