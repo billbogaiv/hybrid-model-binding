@@ -5,7 +5,7 @@ jobs:
     env:
       is_master_branch: ${{github.ref == 'refs/heads/master'}}
       is_release_branch: ${{startsWith(github.ref, 'refs/heads/release') == true}}
-      is_tag: ${{startsWith(github.ref, 'refs/tags') == true && endsWith(github.ref, '.0') == false}}
+      is_tag: ${{startsWith(github.ref, 'refs/tags') == true && endsWith(github.ref, '-alpha.0') == false}}
     runs-on: windows-latest
     steps:
       - name: Setup whether job needs to handle NuGet-packaging
