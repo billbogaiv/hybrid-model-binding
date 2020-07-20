@@ -11,7 +11,7 @@ jobs:
       - name: Setup whether job needs to handle NuGet-packaging
         id: needs_packaging
         env:
-          needs_packaging: ${{env.is_master_branch == 'true' || env.is_release_branch == 'true' || env.is_tag_branch == 'true'}}
+          needs_packaging: ${{env.is_master_branch == 'true' || env.is_release_branch == 'true' || env.is_tag == 'true'}}
         run: echo "::set-output name=value::$env:needs_packaging"
 
       - name: Checkout project
