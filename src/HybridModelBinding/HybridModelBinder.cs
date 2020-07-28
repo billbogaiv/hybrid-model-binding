@@ -214,7 +214,11 @@ namespace HybridModelBinding
 
                             if (matchingUriParams.Any())
                             {
-                                if (matchingUriParams.Count() == 1)
+                                var isPropertyEnumerable =
+                                    typeof(IEnumerable).IsAssignableFrom(property.PropertyType) &&
+                                    !typeof(string).IsAssignableFrom(property.PropertyType);
+
+                                if (matchingUriParams.Count() == 1 && !isPropertyEnumerable)
                                 {
                                     var matchingUriParam = matchingUriParams.First();
                                     var descriptor = TypeDescriptor.GetConverter(property.PropertyType);
@@ -246,7 +250,7 @@ namespace HybridModelBinding
                                         hydratedBoundModel?.HybridBoundProperties?.Add(property.Name, valueProviderId);
                                     }
                                 }
-                                else
+                                else if (isPropertyEnumerable)
                                 {
                                     var descriptor = property.PropertyType.GenericTypeArguments.Any()
                                         ? TypeDescriptor.GetConverter(property.PropertyType.GenericTypeArguments.First())
@@ -257,7 +261,17 @@ namespace HybridModelBinding
 
                                     foreach (var matchingUriParam in matchingUriParams)
                                     {
-                                        if (typeof(IFormFile).IsAssignableFrom(matchingUriParam.GetType()))
+                                        if (valueProvider is BodyValueProvider)
+                                        {
+                                            if (matchingUriParam is IEnumerable matchingUriParamList)
+                                            {
+                                                foreach (var param in matchingUriParamList)
+                                                {
+                                                    propertyListInstance.Add(param);
+                                                }
+                                            }
+                                        }
+                                        else if (typeof(IFormFile).IsAssignableFrom(matchingUriParam.GetType()))
                                         {
                                             try
                                             {
@@ -275,7 +289,7 @@ namespace HybridModelBinding
                                         }
                                     }
 
-                                    if (propertyListInstance.Count == matchingUriParams.Count)
+                                    if (propertyListInstance.Count > 0)
                                     {
                                         property.SetValue(hydratedModel, propertyListInstance, null);
 
