@@ -82,6 +82,8 @@ namespace HybridModelBinding
 
             object hydratedBodyModel = null;
 
+            bindingContext.HttpContext.Request.EnableBuffering();
+
             foreach (var kvp in modelBinders)
             {
                 await kvp.Value.BindModelAsync(bindingContext);
@@ -90,7 +92,10 @@ namespace HybridModelBinding
 
                 if (hydratedBodyModel != null)
                 {
-                    valueProviders.Add(new KeyValuePair<string, IValueProvider>(kvp.Key, new BodyValueProvider(hydratedBodyModel)));
+                    valueProviders.Add(
+                        new KeyValuePair<string, IValueProvider>(
+                            kvp.Key,
+                            new BodyValueProvider(hydratedBodyModel, bindingContext.HttpContext.Request)));
 
                     break;
                 }
