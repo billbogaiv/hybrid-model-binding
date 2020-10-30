@@ -1,6 +1,7 @@
 ﻿using HybridModelBinding.Extensions;
 using HybridModelBinding.ModelBinding;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Collections;
@@ -150,7 +151,16 @@ namespace HybridModelBinding
                 }
             }
 
-            var defaultBindingOrder = hydratedModel.GetType().GetCustomAttribute<HybridBindClassAttribute>()?.DefaultBindingOrder ?? fallbackBindingOrder;
+            /*
+             * We'll first look if the action-parameter has defined default-ordering.
+             * If nothing is found, we'll look at the model-class.
+             * Lastly, we'll use the fallback.
+             */
+            var defaultBindingOrder = (bindingContext.ActionContext.ActionDescriptor.Parameters
+                .Where(x => x.ParameterType == hydratedModel.GetType()).FirstOrDefault() as ControllerParameterDescriptor)
+                ?.ParameterInfo.GetCustomAttribute<FromHybridAttribute>()?.DefaultBindingOrder
+                ?? hydratedModel.GetType().GetCustomAttribute<HybridBindClassAttribute>()?.DefaultBindingOrder
+                ?? fallbackBindingOrder;
 
             foreach (var property in modelProperties)
             {

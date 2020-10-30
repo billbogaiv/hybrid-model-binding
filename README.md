@@ -132,6 +132,17 @@ public IActionResult IndexAlternate(int age, [FromHybrid]IndexModel model)
 { }
 ```
 
+##### FromHybrid
+
+*This attribute is optional if the action only contains one, class-parameter*. When used, however, also has the ability to specify default-ordering when a property is not decorated with `HybridBindProperty`. This will override `FallbackBindingOrder` and `HybridBindClass`. This is useful if an action has different requirements than other actions using the same model:
+
+```csharp
+[HttpGet]
+[Route("{age?}/{name?}")]
+public IActionResult IndexAlternate([FromHybrid(new[] { Source.QueryString, Source.Route })]IndexModel model)
+{ }
+```
+
 #### View
 
 ```html
