@@ -2,7 +2,7 @@
     <PropertyGroup>
         <Description>Provides the ability to bind models using both ModelBinder and ValueProvider in ASP.NET Core.</Description>
         <Authors>Bill Boga</Authors>
-        <TargetFramework>netstandard2.1</TargetFramework>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
         <AssemblyName>HybridModelBinding</AssemblyName>
         <PackageId>HybridModelBinding</PackageId>
         <MinVerMinimumMajorMinor>0.18</MinVerMinimumMajorMinor>
@@ -14,8 +14,8 @@
         <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.1.1" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.1.1" />
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="MinVer" Version="2.0.0">

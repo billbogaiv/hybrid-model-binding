@@ -1,6 +1,5 @@
-﻿using HybridModelBinding.Extensions;
+using HybridModelBinding.Extensions;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Internal;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json.Linq;
 using System;
