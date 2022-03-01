@@ -23,7 +23,7 @@ namespace HybridModelBinding
             this.fallbackBindingOrder = fallbackBindingOrder ?? FallbackBindingOrder;
         }
 
-        protected static IEnumerable<string> FallbackBindingOrder = new[] { Source.Body, Source.Form, Source.Route, Source.QueryString, Source.Header };
+        protected static IEnumerable<string> FallbackBindingOrder = new[] { Source.Body, Source.Form, Source.Route, Source.QueryString, Source.Header, Source.Claim };
 
         private readonly BindStrategy bindStrategy;
         private readonly IEnumerable<string> fallbackBindingOrder;

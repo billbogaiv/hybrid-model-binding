@@ -7,5 +7,6 @@
         public const string Header = nameof(Header);
         public const string QueryString = nameof(QueryString);
         public const string Route = nameof(Route);
+        public const string Claim = nameof(Claim);
     }
 }
