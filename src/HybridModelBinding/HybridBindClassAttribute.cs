@@ -2,7 +2,7 @@
 
 namespace HybridModelBinding
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class HybridBindClassAttribute : Attribute
     {
         public HybridBindClassAttribute(string[] defaultBindingOrder)
@@ -10,6 +10,6 @@ namespace HybridModelBinding
             DefaultBindingOrder = defaultBindingOrder ?? throw new ArgumentNullException(nameof(defaultBindingOrder));
         }
 
-        public string[] DefaultBindingOrder { get; private set; }
+        public string[] DefaultBindingOrder { get; }
     }
 }

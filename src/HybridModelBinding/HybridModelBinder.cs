@@ -19,16 +19,16 @@ namespace HybridModelBinding
             BindStrategy bindStrategy,
             IEnumerable<string> fallbackBindingOrder = null)
         {
-            this.bindStrategy = bindStrategy;
-            this.fallbackBindingOrder = fallbackBindingOrder ?? FallbackBindingOrder;
+            _bindStrategy = bindStrategy;
+            _fallbackBindingOrder = fallbackBindingOrder ?? FallbackBindingOrder;
         }
 
         protected static IEnumerable<string> FallbackBindingOrder = new[] { Source.Body, Source.Form, Source.Route, Source.QueryString, Source.Header, Source.Claim };
 
-        private readonly BindStrategy bindStrategy;
-        private readonly IEnumerable<string> fallbackBindingOrder;
-        private readonly IList<KeyValuePair<string, IModelBinder>> modelBinders = new List<KeyValuePair<string, IModelBinder>>();
-        private readonly IList<KeyValuePair<string, IValueProviderFactory>> valueProviderFactories = new List<KeyValuePair<string, IValueProviderFactory>>();
+        private readonly BindStrategy _bindStrategy;
+        private readonly IEnumerable<string> _fallbackBindingOrder;
+        private readonly IList<KeyValuePair<string, IModelBinder>> _modelBinders = new List<KeyValuePair<string, IModelBinder>>();
+        private readonly IList<KeyValuePair<string, IValueProviderFactory>> _valueProviderFactories = new List<KeyValuePair<string, IValueProviderFactory>>();
 
         public delegate bool BindStrategy(
             IEnumerable<string> previouslyBoundValueProviderIds,
@@ -38,7 +38,7 @@ namespace HybridModelBinding
             string id,
             IModelBinder modelBinder)
         {
-            var existingKeys = modelBinders.Select(x => x.Key);
+            var existingKeys = _modelBinders.Select(x => x.Key);
 
             if (existingKeys.Contains(id))
             {
@@ -48,7 +48,7 @@ namespace HybridModelBinding
             }
             else
             {
-                modelBinders.Add(new KeyValuePair<string, IModelBinder>(id, modelBinder));
+                _modelBinders.Add(new KeyValuePair<string, IModelBinder>(id, modelBinder));
 
                 return this;
             }
@@ -58,7 +58,7 @@ namespace HybridModelBinding
             string id,
             IValueProviderFactory factory)
         {
-            var existingKeys = valueProviderFactories.Select(x => x.Key);
+            var existingKeys = _valueProviderFactories.Select(x => x.Key);
 
             if (existingKeys.Contains(id))
             {
@@ -68,7 +68,7 @@ namespace HybridModelBinding
             }
             else
             {
-                valueProviderFactories.Add(
+                _valueProviderFactories.Add(
                     new KeyValuePair<string, IValueProviderFactory>(id, factory));
 
                 return this;
@@ -85,7 +85,7 @@ namespace HybridModelBinding
 
             bindingContext.HttpContext.Request.EnableBuffering();
 
-            foreach (var kvp in modelBinders)
+            foreach (var kvp in _modelBinders)
             {
                 await kvp.Value.BindModelAsync(bindingContext);
 
@@ -139,7 +139,7 @@ namespace HybridModelBinding
             var modelProperties = hydratedModel.GetPropertiesNotPartOfType<IHybridBoundModel>().ToList();
             var valueProviderFactoryContext = new ValueProviderFactoryContext(bindingContext.ActionContext);
 
-            foreach (var kvp in valueProviderFactories)
+            foreach (var kvp in _valueProviderFactories)
             {
                 await kvp.Value.CreateValueProviderAsync(valueProviderFactoryContext);
 
@@ -160,7 +160,7 @@ namespace HybridModelBinding
                 .Where(x => x.ParameterType == hydratedModel.GetType()).FirstOrDefault() as ControllerParameterDescriptor)
                 ?.ParameterInfo.GetCustomAttribute<FromHybridAttribute>()?.DefaultBindingOrder
                 ?? hydratedModel.GetType().GetCustomAttribute<HybridBindClassAttribute>()?.DefaultBindingOrder
-                ?? fallbackBindingOrder;
+                ?? _fallbackBindingOrder;
 
             foreach (var property in modelProperties)
             {
@@ -190,7 +190,7 @@ namespace HybridModelBinding
                         .FirstOrDefault(x => x.ValueProviders.Contains(valueProviderId));
 
                     var activeBindStrategy = matchingHybridBindPropertyAttribute?.Strategy ?? (fromAttribute?.Strategy == null
-                            ? bindStrategy
+                            ? _bindStrategy
                             : fromAttribute.Strategy);
 
                     if (activeBindStrategy(boundValueProviderIds, valueProviderIds))

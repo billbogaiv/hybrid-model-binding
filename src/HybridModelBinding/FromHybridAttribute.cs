@@ -3,7 +3,7 @@ using System;
 
 namespace HybridModelBinding
 {
-    [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Parameter)]
     public class FromHybridAttribute : Attribute, IBindingSourceMetadata
     {
         public FromHybridAttribute()
@@ -15,6 +15,6 @@ namespace HybridModelBinding
         }
 
         public BindingSource BindingSource => new HybridBindingSource();
-        public string[] DefaultBindingOrder { get; private set; }
+        public string[] DefaultBindingOrder { get; }
     }
 }

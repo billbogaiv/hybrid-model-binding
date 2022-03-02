@@ -3,15 +3,15 @@ using System.Runtime.CompilerServices;
 
 namespace HybridModelBinding
 {
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = true, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
     public class HybridBindPropertyAttribute : Attribute
     {
         /// <param name="name">Provide alternate name within `valueProvider` to bind to this property.</param>
         /// <param name="order">Provide explicit order of binding when matched with other usages of `HybridPropertyAttribute` on the same property.</param>
         public HybridBindPropertyAttribute(
             string valueProvider,
-            [CallerMemberName]string name = default(string),
-            [CallerLineNumber]int order = default(int))
+            [CallerMemberName]string name = default,
+            [CallerLineNumber]int order = default)
             : this(new[] { valueProvider }, name, order)
         { }
 
@@ -19,8 +19,8 @@ namespace HybridModelBinding
         /// <param name="order">Provide explicit order of binding when matched with other usages of `HybridPropertyAttribute` on the same property.</param>
         public HybridBindPropertyAttribute(
             string[] valueProviders,
-            [CallerMemberName]string name = default(string),
-            [CallerLineNumber]int order = default(int))
+            [CallerMemberName]string name = default,
+            [CallerLineNumber]int order = default)
         {
             ValueProviders = valueProviders;
             Name = name;
@@ -32,16 +32,16 @@ namespace HybridModelBinding
         protected HybridBindPropertyAttribute(
             HybridModelBinder.BindStrategy strategy,
             string[] valueProviders,
-            [CallerMemberName]string name = default(string),
-            [CallerLineNumber]int order = default(int))
+            [CallerMemberName]string name = default,
+            [CallerLineNumber]int order = default)
             : this(valueProviders, name, order)
         {
             Strategy = strategy ?? throw new ArgumentNullException(nameof(strategy));
         }
 
-        public string Name { get; private set; }
-        public int? Order { get; private set; }
-        public HybridModelBinder.BindStrategy Strategy { get; private set; }
-        public string[] ValueProviders { get; private set; }
+        public string Name { get; }
+        public int? Order { get; }
+        public HybridModelBinder.BindStrategy Strategy { get; }
+        public string[] ValueProviders { get; }
     }
 }

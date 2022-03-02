@@ -9,34 +9,22 @@ namespace HybridModelBinding
             BindingSource bindingSource,
             IModelBinder modelBinder)
         {
-            if (bindingSource == null)
-            {
-                throw new ArgumentNullException(nameof(bindingSource));
-            }
-
-            if (modelBinder == null)
-            {
-                throw new ArgumentNullException(nameof(modelBinder));
-            }
-
-            this.bindingSource = bindingSource;
-            this.modelBinder = modelBinder;
+            _bindingSource = bindingSource ?? throw new ArgumentNullException(nameof(bindingSource));
+            _modelBinder = modelBinder ?? throw new ArgumentNullException(nameof(modelBinder));
         }
 
-        private BindingSource bindingSource { get; set; }
-        private IModelBinder modelBinder { get; set; }
+        private readonly BindingSource _bindingSource; 
+        private readonly IModelBinder _modelBinder; 
 
         public virtual IModelBinder GetBinder(ModelBinderProviderContext context)
         {
             if (context.BindingInfo?.BindingSource != null &&
-                context.BindingInfo.BindingSource.CanAcceptDataFrom(bindingSource))
+                context.BindingInfo.BindingSource.CanAcceptDataFrom(_bindingSource))
             {
-                return modelBinder;
+                return _modelBinder;
             }
-            else
-            {
-                return null;
-            }
+
+            return null;
         }
     }
 }

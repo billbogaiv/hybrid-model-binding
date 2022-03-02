@@ -10,8 +10,8 @@ namespace HybridModelBinding.ModelBinding
         private readonly BindingSource Claim = new BindingSource(
             "Claim",
             "BindingSource_Claim",
-            isGreedy: false,
-            isFromRequest: true);
+            false,
+            true);
 
         public Task CreateValueProviderAsync(ValueProviderFactoryContext context)
         {
