@@ -3,7 +3,7 @@
 namespace HybridModelBinding
 {
     [Obsolete("Use `" + nameof(HybridBindPropertyAttribute) + "` instead.")]
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Property)]
     public class FromAttribute : Attribute
     {
         /// <summary>

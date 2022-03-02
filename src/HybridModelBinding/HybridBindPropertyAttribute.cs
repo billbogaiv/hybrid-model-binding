@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace HybridModelBinding
 {
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = true, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
     public class HybridBindPropertyAttribute : Attribute
     {
         /// <param name="name">Provide alternate name within `valueProvider` to bind to this property.</param>

@@ -3,7 +3,7 @@ using System;
 
 namespace HybridModelBinding
 {
-    [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Parameter)]
     public class FromHybridAttribute : Attribute, IBindingSourceMetadata
     {
         public FromHybridAttribute()
