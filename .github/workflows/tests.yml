@@ -1,5 +1,4 @@
 name: .NET Core
-
 # Trigger event
 on:
   # Run on a push or pull request to default branch (usually master)
