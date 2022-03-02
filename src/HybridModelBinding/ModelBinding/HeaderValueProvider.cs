@@ -23,25 +23,25 @@ namespace HybridModelBinding.ModelBinding
                 throw new ArgumentNullException(nameof(bindingSource));
             }
 
-            this.values = values ?? throw new ArgumentNullException(nameof(values));
+            _values = values ?? throw new ArgumentNullException(nameof(values));
             Culture = culture;
         }
 
         public CultureInfo Culture { get; }
 
-        private readonly IHeaderDictionary values;
-        private PrefixContainer prefixContainer;
+        private readonly IHeaderDictionary _values;
+        private PrefixContainer _prefixContainer;
 
         protected PrefixContainer PrefixContainer
         {
             get
             {
-                if (prefixContainer == null)
+                if (_prefixContainer == null)
                 {
-                    prefixContainer = new PrefixContainer(values.Keys);
+                    _prefixContainer = new PrefixContainer(_values.Keys);
                 }
 
-                return prefixContainer;
+                return _prefixContainer;
             }
         }
 
@@ -67,16 +67,14 @@ namespace HybridModelBinding.ModelBinding
                 throw new ArgumentNullException(nameof(key));
             }
 
-            var values = this.values[key];
+            var values = _values[key];
 
             if (values.Count == 0)
             {
                 return ValueProviderResult.None;
             }
-            else
-            {
-                return new ValueProviderResult(values, Culture);
-            }
+
+            return new ValueProviderResult(values, Culture);
         }
     }
 }

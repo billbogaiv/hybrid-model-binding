@@ -44,23 +44,23 @@ namespace HybridModelBinding.ModelBinding
             foreach (var property in model.GetPropertiesNotPartOfType<IHybridBoundModel>()
                 .Where(x => !requestKeys.Any() || requestKeys.Contains(x.Name, StringComparer.OrdinalIgnoreCase)))
             {
-                values.Add(property.Name, property.GetValue(model, null));
+                _values.Add(property.Name, property.GetValue(model, null));
             }
         }
 
-        private PrefixContainer prefixContainer;
-        private IDictionary<string, object> values = new Dictionary<string, object>();
+        private PrefixContainer _prefixContainer;
+        private readonly IDictionary<string, object> _values = new Dictionary<string, object>();
 
         public PrefixContainer PrefixContainer
         {
             get
             {
-                if (prefixContainer == null)
+                if (_prefixContainer == null)
                 {
-                    prefixContainer = new PrefixContainer(values.Keys);
+                    _prefixContainer = new PrefixContainer(_values.Keys);
                 }
 
-                return prefixContainer;
+                return _prefixContainer;
             }
         }
 
@@ -71,8 +71,8 @@ namespace HybridModelBinding.ModelBinding
 
         public object GetObject(string key)
         {
-            return values.ContainsKey(key)
-                ? values[key]
+            return _values.ContainsKey(key)
+                ? _values[key]
                 : null;
         }
 
