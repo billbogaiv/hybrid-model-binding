@@ -39,9 +39,9 @@ namespace HybridModelBinding
             Strategy = strategy ?? throw new ArgumentNullException(nameof(strategy));
         }
 
-        public string Name { get; private set; }
-        public int? Order { get; private set; }
-        public HybridModelBinder.BindStrategy Strategy { get; private set; }
-        public string[] ValueProviders { get; private set; }
+        public string Name { get; }
+        public int? Order { get; }
+        public HybridModelBinder.BindStrategy Strategy { get; }
+        public string[] ValueProviders { get; }
     }
 }

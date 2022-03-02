@@ -23,8 +23,8 @@ namespace HybridModelBinding
             this.modelBinder = modelBinder;
         }
 
-        private BindingSource bindingSource { get; set; }
-        private IModelBinder modelBinder { get; set; }
+        private BindingSource bindingSource { get; }
+        private IModelBinder modelBinder { get; }
 
         public virtual IModelBinder GetBinder(ModelBinderProviderContext context)
         {

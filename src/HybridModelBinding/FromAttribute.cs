@@ -20,7 +20,7 @@ namespace HybridModelBinding
             Strategy = strategy ?? throw new ArgumentNullException(nameof(strategy));
         }
 
-        public HybridModelBinder.BindStrategy Strategy { get; private set; }
-        public string[] ValueProviders { get; private set; }
+        public HybridModelBinder.BindStrategy Strategy { get; }
+        public string[] ValueProviders { get; }
     }
 }

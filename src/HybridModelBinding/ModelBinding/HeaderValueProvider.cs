@@ -27,7 +27,7 @@ namespace HybridModelBinding.ModelBinding
             Culture = culture;
         }
 
-        public CultureInfo Culture { get; private set; }
+        public CultureInfo Culture { get; }
 
         private readonly IHeaderDictionary values;
         private PrefixContainer prefixContainer;

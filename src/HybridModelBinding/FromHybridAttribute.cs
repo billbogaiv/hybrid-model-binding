@@ -15,6 +15,6 @@ namespace HybridModelBinding
         }
 
         public BindingSource BindingSource => new HybridBindingSource();
-        public string[] DefaultBindingOrder { get; private set; }
+        public string[] DefaultBindingOrder { get; }
     }
 }

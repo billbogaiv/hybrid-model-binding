@@ -10,6 +10,6 @@ namespace HybridModelBinding
             DefaultBindingOrder = defaultBindingOrder ?? throw new ArgumentNullException(nameof(defaultBindingOrder));
         }
 
-        public string[] DefaultBindingOrder { get; private set; }
+        public string[] DefaultBindingOrder { get; }
     }
 }
