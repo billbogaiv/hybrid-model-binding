@@ -21,7 +21,8 @@ namespace HybridModelBinding
                 .AddValueProviderFactory(Form, new FormValueProviderFactory())
                 .AddValueProviderFactory(Route, new RouteValueProviderFactory())
                 .AddValueProviderFactory(QueryString, new QueryStringValueProviderFactory())
-                .AddValueProviderFactory(Header, new HeaderValueProviderFactory());
+                .AddValueProviderFactory(Header, new HeaderValueProviderFactory())
+                .AddValueProviderFactory(Claim, new ClaimValueProviderFactory());
         }
     }
 }
