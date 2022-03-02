@@ -10,8 +10,8 @@ namespace HybridModelBinding
         /// <param name="order">Provide explicit order of binding when matched with other usages of `HybridPropertyAttribute` on the same property.</param>
         public HybridBindPropertyAttribute(
             string valueProvider,
-            [CallerMemberName]string name = default(string),
-            [CallerLineNumber]int order = default(int))
+            [CallerMemberName]string name = default,
+            [CallerLineNumber]int order = default)
             : this(new[] { valueProvider }, name, order)
         { }
 
@@ -19,8 +19,8 @@ namespace HybridModelBinding
         /// <param name="order">Provide explicit order of binding when matched with other usages of `HybridPropertyAttribute` on the same property.</param>
         public HybridBindPropertyAttribute(
             string[] valueProviders,
-            [CallerMemberName]string name = default(string),
-            [CallerLineNumber]int order = default(int))
+            [CallerMemberName]string name = default,
+            [CallerLineNumber]int order = default)
         {
             ValueProviders = valueProviders;
             Name = name;
@@ -32,8 +32,8 @@ namespace HybridModelBinding
         protected HybridBindPropertyAttribute(
             HybridModelBinder.BindStrategy strategy,
             string[] valueProviders,
-            [CallerMemberName]string name = default(string),
-            [CallerLineNumber]int order = default(int))
+            [CallerMemberName]string name = default,
+            [CallerLineNumber]int order = default)
             : this(valueProviders, name, order)
         {
             Strategy = strategy ?? throw new ArgumentNullException(nameof(strategy));
