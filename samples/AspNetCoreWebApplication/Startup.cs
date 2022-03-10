@@ -10,7 +10,8 @@ namespace AspNetCoreWebApplication
         {
             services
                 .AddMvc()
-                .AddHybridModelBinder();
+                .AddHybridModelBinder()
+                .AddNewtonsoftJson();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -27,10 +28,7 @@ namespace AspNetCoreWebApplication
             app.UseStaticFiles();
 
             app.UseRouting();
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
     }
 }
