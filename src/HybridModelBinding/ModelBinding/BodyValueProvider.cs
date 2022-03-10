@@ -41,10 +41,13 @@ namespace HybridModelBinding.ModelBinding
                     .ToArray();
             }
 
-            foreach (var property in model.GetPropertiesNotPartOfType<IHybridBoundModel>()
-                .Where(x => !requestKeys.Any() || requestKeys.Contains(x.Name, StringComparer.OrdinalIgnoreCase)))
+            foreach (var property in model.GetPropertiesNotPartOfType<IHybridBoundModel>())
             {
-                values.Add(property.Name, property.GetValue(model, null));
+                var propertyName = property.GetNameFromAttributes();
+                if (!requestKeys.Any() || requestKeys.Contains(propertyName, StringComparer.OrdinalIgnoreCase))
+                {
+                    values.Add(property.Name, property.GetValue(model, null));
+                }
             }
         }
 
